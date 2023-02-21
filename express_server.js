@@ -6,15 +6,30 @@ app.set("view engine", "ejs");
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
-  "abc123": "http://www.facebook.com"
+  "abc123": "http://www.facebook.com",
 };
+
+function generateRandomString() {
+  const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let result = ' ';
+  const charactersLength = characters.length;
+  for ( let i = 0; i < 6; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+
+  return result;
+}
+
+app.use(express.urlencoded({ extended: true }));
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-app.get("/", (req, res) => {
-  res.send("<html><body>Hello! This is your <b>home page</b>!</body></html>\n");
+app.post("/urls", (req, res) => {
+  let shortUrl = generateRandomString();
+  urlDatabase[shortUrl] = req.body.longURL
+  res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
 
 app.get("/urls", (req, res) => {
@@ -22,6 +37,10 @@ const templateVars = {
   urls : urlDatabase
 }
   res.render("urls_index", templateVars);
+});
+
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new");
 });
 
 app.get("/urls/:urlId", (req, res) => {
@@ -43,11 +62,6 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/set", (req, res) => {
-  const a = 1;
-  res.send(`a = ${a}`);
- });
- 
- app.get("/fetch", (req, res) => {
   const a = 1;
   res.send(`a = ${a}`);
  });
