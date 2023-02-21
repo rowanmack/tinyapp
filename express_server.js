@@ -5,7 +5,8 @@ app.set("view engine", "ejs");
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "9sm5xK": "http://www.google.com",
+  "abc123": "http://www.facebook.com"
 };
 
 app.listen(PORT, () => {
@@ -22,6 +23,16 @@ const templateVars = {
 }
   res.render("urls_index", templateVars);
 });
+
+app.get("/urls/:urlId", (req, res) => {
+  const shortUrl = req.params.urlId
+  const longURL = urlDatabase[shortUrl]
+  const templateVars = {
+    longURL,
+    id : shortUrl
+  }
+  res.render("urls_show", templateVars);
+})
 
 // app.get("/urls.json", (req, res) => {
 //   res.json(urlDatabase);
