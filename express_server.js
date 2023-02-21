@@ -22,9 +22,10 @@ function generateRandomString() {
 app.use(express.urlencoded({ extended: true }));
 
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+  console.log(`Tinyapp app listening on port ${PORT}!`);
 });
 
+//new shortened URL
 app.post("/urls", (req, res) => {
   const shortUrl = generateRandomString();
   const longURL = req.body.longURL;
@@ -33,18 +34,34 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortUrl}`);
 });
 
+// tinylink to long url
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id];
   res.redirect(longURL);
 });
 
+//edit link on homepage to url_show
+app.get("/u/:id/edit", (req, res) => {
+  res.redirect("/urls/:id");
+});
+
+//update long url submit button on url_show
+app.post("/urls/:id", (req, res) => {
+  const id = req.params.id;
+  const newURL = req.body.longURL;
+  urlDatabase[id] = newURL;
+  res.redirect(`/urls/${id}`);
+});
+
+//delete button on homepage, deletes urls
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
   delete urlDatabase[id];
   res.redirect("/urls");
 });
 
+//homepage, displays list of urls
 app.get("/urls", (req, res) => {
   const templateVars = {
     urls: urlDatabase
@@ -52,10 +69,12 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+//new tinylink submission page
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+//loads urls_show
 app.get("/urls/:urlId", (req, res) => {
   const shortUrl = req.params.urlId;
   const longURL = urlDatabase[shortUrl];
