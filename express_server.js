@@ -10,13 +10,12 @@ const urlDatabase = {
 };
 
 function generateRandomString() {
-  const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
   const charactersLength = characters.length;
-  for ( let i = 0; i < 6; i++ ) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  for (let i = 0; i < 6; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
   }
-
   return result;
 }
 
@@ -28,22 +27,28 @@ app.listen(PORT, () => {
 
 app.post("/urls", (req, res) => {
   const shortUrl = generateRandomString();
-  const longURL = req.body.longURL
-  urlDatabase[shortUrl] = longURL
+  const longURL = req.body.longURL;
+  urlDatabase[shortUrl] = longURL;
   // res.send("Ok"); // Respond with 'Ok' (we will replace this)
-  res.redirect(`/urls/${shortUrl}`)
+  res.redirect(`/urls/${shortUrl}`);
 });
 
 app.get("/u/:id", (req, res) => {
-  const id = req.params.id
-  const longURL = urlDatabase[id]
+  const id = req.params.id;
+  const longURL = urlDatabase[id];
   res.redirect(longURL);
 });
 
+app.post("/urls/:id/delete", (req, res) => {
+  const id = req.params.id;
+  delete urlDatabase[id];
+  res.redirect("/urls");
+});
+
 app.get("/urls", (req, res) => {
-const templateVars = {
-  urls : urlDatabase
-}
+  const templateVars = {
+    urls: urlDatabase
+  };
   res.render("urls_index", templateVars);
 });
 
@@ -52,24 +57,20 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:urlId", (req, res) => {
-  const shortUrl = req.params.urlId
-  const longURL = urlDatabase[shortUrl]
+  const shortUrl = req.params.urlId;
+  const longURL = urlDatabase[shortUrl];
   const templateVars = {
     longURL,
-    id : shortUrl
-  }
+    id: shortUrl
+  };
   res.render("urls_show", templateVars);
-})
+});
 
 // app.get("/urls.json", (req, res) => {
 //   res.json(urlDatabase);
 // });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
-app.get("/set", (req, res) => {
-  const a = 1;
-  res.send(`a = ${a}`);
- });
+// app.get("/set", (req, res) => {
+//   const a = 1;
+//   res.send(`a = ${a}`);
+// });
