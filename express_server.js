@@ -37,6 +37,18 @@ const users = {
     password: "dishwasher-funk",
   },
 };
+//email lookup in users object
+const getUserByEmail = (email) => {
+  let userObj = null;
+  for (const user in users) {
+    const userEmail = users[user]['email'];
+    if (userEmail === email) {
+      userObj = users[user];
+      return userObj;
+    }
+  }
+  return userObj;
+};
 
 
 app.listen(PORT, () => {
@@ -53,15 +65,21 @@ app.get("/urls/register", (req, res) => {
 
 //account register post
 app.post("/register", (req, res) => {
+  const email = req.body.email
+  const password = req.body.password
+  if (getUserByEmail(email)) {
+    return res.status(400).send('Account already exists!')
+  }
+  if (!email || !password) {
+    return res.status(400).send('Please provide a username and password!');
+  }
   const userID = generateRandomString();
   users[userID] = {
     userID,
-    email: req.body.email,
-    password: req.body.password
+    email: email,
+    password: password
   }
   res.cookie('user_id', userID);
-  console.log(userID)
-  console.log(users)
   res.redirect("/urls");
 });
 
