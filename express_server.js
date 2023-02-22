@@ -4,8 +4,8 @@ const cookieParser = require('cookie-parser')
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs");
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser())
+app.use(express.urlencoded({ extended: true })); //populates req.body
+app.use(cookieParser()) //populates req.cookies
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -13,6 +13,7 @@ const urlDatabase = {
   "abc123": "http://www.facebook.com",
 };
 
+//random string for accountId's and shortnening URLs
 function generateRandomString() {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -23,10 +24,45 @@ function generateRandomString() {
   return result;
 }
 
+//Object to store account information
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
 
 
 app.listen(PORT, () => {
   console.log(`Tinyapp app listening on port ${PORT}!`);
+});
+
+//account registration page
+app.get("/urls/register", (req, res) => {
+  const templateVars = {
+    user: ""
+  }
+  res.render("urls_register", templateVars);
+});
+
+//account register post
+app.post("/register", (req, res) => {
+  const userID = generateRandomString();
+  users[userID] = {
+    userID,
+    email: req.body.email,
+    password: req.body.password
+  }
+  res.cookie('user_id', userID);
+  console.log(userID)
+  console.log(users)
+  res.redirect("/urls");
 });
 
 //new shortened URL
@@ -50,21 +86,13 @@ app.get("/u/:id/edit", (req, res) => {
   res.redirect("/urls/:id");
 });
 
-//account registration
-
-app.get("/urls/register", (req, res) => {
-  const templateVars = {
-    username: req.cookies["username"]
-  }
-  res.render("urls_account", templateVars);
-});
-
 //username login
 app.post("/login", (req, res) => {
   res.cookie("username", req.body.username)
   res.redirect("/urls");
 });
 
+//user logout
 app.post("/logout", (req, res) => {
   res.clearCookie("username")
   res.redirect("/urls");
@@ -87,29 +115,32 @@ app.post("/urls/:id/delete", (req, res) => {
 
 //homepage, displays list of urls
 app.get("/urls", (req, res) => {
+  const user = users[req.cookies["user_id"]]
   const templateVars = {
     urls: urlDatabase, 
-    username: req.cookies["username"]
+    user: user
   };
   res.render("urls_index", templateVars);
 });
 
 //new tinylink submission page
 app.get("/urls/new", (req, res) => {
+  const user = users[req.cookies["user_id"]]
   const templateVars = {
-    username: req.cookies["username"]
+    user: user
   }
   res.render("urls_new", templateVars);
 });
 
 //loads urls_show
 app.get("/urls/:urlId", (req, res) => {
+  const user = users[req.cookies["user_id"]]
   const shortUrl = req.params.urlId;
   const longURL = urlDatabase[shortUrl];
   const templateVars = {
     longURL,
     id: shortUrl,
-    username: req.cookies["username"]
+    user: user
   };
   res.render("urls_show", templateVars);
 });
