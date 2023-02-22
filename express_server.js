@@ -1,7 +1,11 @@
 const express = require("express");
 const app = express();
+const cookieParser = require('cookie-parser')
 const PORT = 8080; // default port 8080
+
 app.set("view engine", "ejs");
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser())
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -19,7 +23,7 @@ function generateRandomString() {
   return result;
 }
 
-app.use(express.urlencoded({ extended: true }));
+
 
 app.listen(PORT, () => {
   console.log(`Tinyapp app listening on port ${PORT}!`);
@@ -70,14 +74,18 @@ app.post("/urls/:id/delete", (req, res) => {
 //homepage, displays list of urls
 app.get("/urls", (req, res) => {
   const templateVars = {
-    urls: urlDatabase
+    urls: urlDatabase, 
+    username: req.cookies["username"]
   };
   res.render("urls_index", templateVars);
 });
 
 //new tinylink submission page
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    username: req.cookies["username"]
+  }
+  res.render("urls_new", templateVars);
 });
 
 //loads urls_show
@@ -86,7 +94,8 @@ app.get("/urls/:urlId", (req, res) => {
   const longURL = urlDatabase[shortUrl];
   const templateVars = {
     longURL,
-    id: shortUrl
+    id: shortUrl,
+    username: req.cookies["username"]
   };
   res.render("urls_show", templateVars);
 });
