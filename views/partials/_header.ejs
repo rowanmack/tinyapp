@@ -25,15 +25,13 @@
       <button type="submit" class="btn btn-info">Logout</button>
     </form>
     <% } else { %>
-    <form class="form-inline" method="POST" action="/login">
-      <input
-        class="form-control"
-        type="text"
-        placeholder="Username"
-        name="username"
-        style="margin-right: 20px"
-      />
-      <button type="submit" class="btn btn-info">Sign In</button>
-    </form> <% } %>
+      <form method="GET" action="/urls/login %>">
+      <button type="submit" class="btn btn-secondary">Sign In</button>
+    </form>
+    <div style="margin-right: 20px"></div>
+      <form method="GET" action="/urls/register %>">
+        <button type="submit" class="btn btn-primary">Register</button>
+      </form>
+   <% } %>
   </nav>
 </header>
