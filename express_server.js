@@ -46,6 +46,12 @@ app.get("/u/:id/edit", (req, res) => {
   res.redirect("/urls/:id");
 });
 
+//username login
+app.post("/login", (req, res) => {
+  res.cookie("username", req.body.username)
+  res.redirect("/urls");
+});
+
 //update long url submit button on url_show
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
