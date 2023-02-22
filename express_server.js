@@ -50,6 +50,15 @@ app.get("/u/:id/edit", (req, res) => {
   res.redirect("/urls/:id");
 });
 
+//account registration
+
+app.get("/urls/register", (req, res) => {
+  const templateVars = {
+    username: req.cookies["username"]
+  }
+  res.render("urls_account", templateVars);
+});
+
 //username login
 app.post("/login", (req, res) => {
   res.cookie("username", req.body.username)
