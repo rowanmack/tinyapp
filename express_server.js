@@ -126,6 +126,9 @@ app.get("/urls/login", (req, res) => {
 
 //new shortened URL
 app.post("/urls", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    return res.status(400).send('Please login to shorten URLs!')
+  }
   const shortUrl = generateRandomString();
   const longURL = req.body.longURL;
   urlDatabase[shortUrl] = longURL;
@@ -137,6 +140,9 @@ app.post("/urls", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id];
+  if(!longURL){
+    return res.status(400).send('this URL does not exist')
+  }
   res.redirect(longURL);
 });
 
@@ -156,6 +162,9 @@ app.post("/logout", (req, res) => {
 
 //update long url submit button on url_show
 app.post("/urls/:id", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    return res.status(400).send('Please login to shorten URLs!')
+  }
   const id = req.params.id;
   const newURL = req.body.longURL;
   urlDatabase[id] = newURL;
@@ -181,6 +190,9 @@ app.get("/urls", (req, res) => {
 
 //new tinylink submission page
 app.get("/urls/new", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    return res.redirect('/urls/login')
+  }
   const user = users[req.cookies["user_id"]];
   const templateVars = {
     user: user
