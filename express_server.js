@@ -62,6 +62,9 @@ app.listen(PORT, () => {
 
 //account registration page
 app.get("/urls/register", (req, res) => {
+  if (req.cookies["user_id"]) {
+    res.redirect('/urls')
+  }
   const templateVars = {
     user: ""
   };
@@ -88,6 +91,7 @@ app.post("/register", (req, res) => {
   res.redirect("/urls");
 });
 
+//account login post
 app.post("/urls/login", (req, res) => {
   const loginEmail = req.body.email;
   const loginPassword = req.body.password;
@@ -109,6 +113,10 @@ app.post("/urls/login", (req, res) => {
 
 //login page
 app.get("/urls/login", (req, res) => {
+
+  if (req.cookies["user_id"]) {
+    res.redirect('/urls')
+  }
   const user = users[req.cookies["user_id"]];
   const templateVars = {
     user: user
@@ -136,8 +144,10 @@ app.get("/u/:id", (req, res) => {
 app.get("/u/:id/edit", (req, res) => {
   res.redirect("/urls/:id");
 });
-
-
+/** ---------------------------------------
+ * these are post routes: *
+ * ----------------------------------------
+*/
 //user logout
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
