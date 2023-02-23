@@ -8,9 +8,18 @@ app.use(express.urlencoded({ extended: true })); //populates req.body
 app.use(cookieParser()); //populates req.cookies
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
-  "abc123": "http://www.facebook.com",
+  b2xVn2: {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "userRandomID",
+  },
+  '9sm5xK': {
+    longURL: "http://www.google.com",
+    userID: "user2RandomID",
+  },
+  'abc123': {
+    longURL: "http://www.facebook.com",
+    userID: "user2RandomID"
+  }
 };
 
 //random string for accountId's and shortnening URLs
@@ -36,7 +45,7 @@ const users = {
     email: "user2@example.com",
     password: "dishwasher-funk",
   },
-  'abc123' : {
+  'abc123': {
     id: "abc123",
     email: "abc@gmail.com",
     password: "1"
@@ -63,7 +72,7 @@ app.listen(PORT, () => {
 //account registration page
 app.get("/urls/register", (req, res) => {
   if (req.cookies["user_id"]) {
-    res.redirect('/urls')
+    res.redirect('/urls');
   }
   const templateVars = {
     user: ""
@@ -98,7 +107,7 @@ app.post("/urls/login", (req, res) => {
   if (!loginEmail || !loginPassword) {
     return res.status(400).send('Please provide an email and password!');
   }
-  const foundUser = getUserByEmail(loginEmail)
+  const foundUser = getUserByEmail(loginEmail);
   console.log("foundUser var:", foundUser);
   if (!foundUser) {
     return res.status(403).send('Account not registered');
@@ -115,7 +124,7 @@ app.post("/urls/login", (req, res) => {
 app.get("/urls/login", (req, res) => {
 
   if (req.cookies["user_id"]) {
-    res.redirect('/urls')
+    res.redirect('/urls');
   }
   const user = users[req.cookies["user_id"]];
   const templateVars = {
@@ -127,21 +136,21 @@ app.get("/urls/login", (req, res) => {
 //new shortened URL
 app.post("/urls", (req, res) => {
   if (!req.cookies["user_id"]) {
-    return res.status(400).send('Please login to shorten URLs!')
+    return res.status(400).send('Please login to shorten URLs!');
   }
   const shortUrl = generateRandomString();
-  const longURL = req.body.longURL;
-  urlDatabase[shortUrl] = longURL;
-  // res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  const newlongURL = req.body.longURL;
+  urlDatabase[shortUrl] = {};
+  urlDatabase[shortUrl]["longURL"] = newlongURL;
   res.redirect(`/urls/${shortUrl}`);
 });
 
 // tinylink to long url
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
-  const longURL = urlDatabase[id];
-  if(!longURL){
-    return res.status(400).send('this URL does not exist')
+  const longURL = urlDatabase[id]["longURL"];
+  if (!longURL) {
+    return res.status(400).send('this URL does not exist');
   }
   res.redirect(longURL);
 });
@@ -163,11 +172,11 @@ app.post("/logout", (req, res) => {
 //update long url submit button on url_show
 app.post("/urls/:id", (req, res) => {
   if (!req.cookies["user_id"]) {
-    return res.status(400).send('Please login to shorten URLs!')
+    return res.status(400).send('Please login to shorten URLs!');
   }
   const id = req.params.id;
   const newURL = req.body.longURL;
-  urlDatabase[id] = newURL;
+  urlDatabase[id]["longURL"] = newURL;
   res.redirect(`/urls/${id}`);
 });
 
@@ -181,6 +190,9 @@ app.post("/urls/:id/delete", (req, res) => {
 //homepage, displays list of urls
 app.get("/urls", (req, res) => {
   const user = users[req.cookies["user_id"]];
+  if(!user) {
+   return res.status(403).send('Please login to view your URLs. <a href="/urls/login"><login</a>')
+  }
   const templateVars = {
     urls: urlDatabase,
     user: user
@@ -191,7 +203,7 @@ app.get("/urls", (req, res) => {
 //new tinylink submission page
 app.get("/urls/new", (req, res) => {
   if (!req.cookies["user_id"]) {
-    return res.redirect('/urls/login')
+    return res.redirect('/urls/login');
   }
   const user = users[req.cookies["user_id"]];
   const templateVars = {
@@ -204,9 +216,9 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:urlId", (req, res) => {
   const user = users[req.cookies["user_id"]];
   const shortUrl = req.params.urlId;
-  const longURL = urlDatabase[shortUrl];
+  const longUrl = urlDatabase[shortUrl]["longURL"];
   const templateVars = {
-    longURL,
+    longUrl,
     id: shortUrl,
     user: user
   };
