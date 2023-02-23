@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const cookieParser = require('cookie-parser');
 const PORT = 8080; // default port 8080
+const bcrypt = require("bcryptjs");
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true })); //populates req.body
@@ -98,17 +99,19 @@ app.get("/urls/register", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  if (getUserByEmail(email)) {
-    return res.status(400).send('Account already exists!');
-  }
+
   if (!email || !password) {
     return res.status(400).send('Please provide an email and password!');
+  }
+
+  if (getUserByEmail(email)) {
+    return res.status(400).send('Account already exists!');
   }
   const id = generateRandomString();
   users[id] = {
     id,
     email: email,
-    password: password
+    password: bcrypt.hashSync(password, 10)
   };
   res.cookie('user_id', id);
   res.redirect("/urls");
@@ -118,19 +121,23 @@ app.post("/register", (req, res) => {
 app.post("/urls/login", (req, res) => {
   const loginEmail = req.body.email;
   const loginPassword = req.body.password;
+
   if (!loginEmail || !loginPassword) {
     return res.status(400).send('Please provide an email and password!');
   }
   const foundUser = getUserByEmail(loginEmail);
-  console.log("foundUser var:", foundUser);
+
   if (!foundUser) {
     return res.status(403).send('Account not registered');
   }
-  const userID = foundUser["id"];
-  if (loginPassword !== foundUser["password"]) {
+
+  if (!bcrypt.compareSync(loginPassword, foundUser.password)) {
     return res.status(403).send('Email/Password Incorrect');
   }
-  res.cookie("user_id", userID);
+
+  console.log("users:", users)
+  
+  res.cookie("user_id", foundUser.id);
   res.redirect("/urls");
 });
 
@@ -138,7 +145,7 @@ app.post("/urls/login", (req, res) => {
 app.get("/urls/login", (req, res) => {
 
   if (req.cookies["user_id"]) {
-    res.redirect('/urls');
+     res.redirect('/urls');
   }
   const user = users[req.cookies["user_id"]];
   const templateVars = {
