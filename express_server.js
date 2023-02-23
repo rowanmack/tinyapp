@@ -14,13 +14,34 @@ const urlDatabase = {
   },
   '9sm5xK': {
     longURL: "http://www.google.com",
-    userID: "user2RandomID",
+    userID: "abc123",
   },
-  'abc123': {
+  'hbk9uh': {
     longURL: "http://www.facebook.com",
-    userID: "user2RandomID"
+    userID: "abc123"
   }
 };
+
+//Object to store account information
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "2",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+  abc123: {
+    id: "abc123",
+    email: "abc@gmail.com",
+    password: "1"
+  },
+};
+
+//FUNCTIONs --------------------------------------------------|
 
 //random string for accountId's and shortnening URLs
 function generateRandomString() {
@@ -32,25 +53,6 @@ function generateRandomString() {
   }
   return result;
 }
-
-//Object to store account information
-const users = {
-  userRandomID: {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur",
-  },
-  user2RandomID: {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk",
-  },
-  'abc123': {
-    id: "abc123",
-    email: "abc@gmail.com",
-    password: "1"
-  },
-};
 //email lookup in users object
 const getUserByEmail = (email) => {
   let userObj = null;
@@ -63,7 +65,19 @@ const getUserByEmail = (email) => {
   }
   return userObj;
 };
+//returns an array of URL ids associated with a given userID
+const getUrlsForUser = function(id) {
+  const userUrls = [];
+  for (let key in urlDatabase) {
+    if (urlDatabase[key].userID === id) {
+      userUrls.push(key)  
+    }
+  }
+  return userUrls;
+};
 
+//--------------------------------------------------------------|
+//--------------------------------------------------------------|
 
 app.listen(PORT, () => {
   console.log(`Tinyapp app listening on port ${PORT}!`);
@@ -136,7 +150,7 @@ app.get("/urls/login", (req, res) => {
 //new shortened URL
 app.post("/urls", (req, res) => {
   if (!req.cookies["user_id"]) {
-    return res.status(400).send('Please login to shorten URLs!');
+    return res.status(400).send('Please login to shorten URLs! <a href="/login"></a>');
   }
   const shortUrl = generateRandomString();
   const newlongURL = req.body.longURL;
@@ -183,6 +197,19 @@ app.post("/urls/:id", (req, res) => {
 //delete button on homepage, deletes urls
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
+
+  if(!urlDatabase[id]) {
+    return res.status(400).send('file does not exist');
+  }
+
+  if(!req.cookies["user_id"]) {
+    return res.status(400).send('You must login to delete');
+  }
+
+  if(!req.cookies["user_id"] !== urlDatabase[id].userID) {
+    return res.status(400).send('file does not exist');
+  }
+
   delete urlDatabase[id];
   res.redirect("/urls");
 });
@@ -193,9 +220,15 @@ app.get("/urls", (req, res) => {
   if(!user) {
    return res.status(403).send('Please login to view your URLs. <a href="/urls/login"><login</a>')
   }
+
+  // console.log("getUrlsForUser:", getUrlsForUser(user.id)); -> works, provides:[ '9sm5xK', 'hbk9uh' ]
+  
+  userUrls = getUrlsForUser(user.id)
+
   const templateVars = {
     urls: urlDatabase,
-    user: user
+    user: user,
+    userUrls: userUrls
   };
   res.render("urls_index", templateVars);
 });
@@ -212,11 +245,21 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-//loads urls_show
+//loads urls_show/edit page
 app.get("/urls/:urlId", (req, res) => {
   const user = users[req.cookies["user_id"]];
   const shortUrl = req.params.urlId;
+  console.log("shortUrl:", shortUrl)
   const longUrl = urlDatabase[shortUrl]["longURL"];
+
+  if (!user) {
+    return res.status(403).send('Please login to access this page');
+  }
+
+  if (urlDatabase[shortUrl].userID !== user.id) {
+    return res.status(403).send('Page not accessible');
+  }
+
   const templateVars = {
     longUrl,
     id: shortUrl,
@@ -224,12 +267,3 @@ app.get("/urls/:urlId", (req, res) => {
   };
   res.render("urls_show", templateVars);
 });
-
-// app.get("/urls.json", (req, res) => {
-//   res.json(urlDatabase);
-// });
-
-// app.get("/set", (req, res) => {
-//   const a = 1;
-//   res.send(`a = ${a}`);
-// });

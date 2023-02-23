@@ -32,7 +32,7 @@
           </tr>
         </thead>
         <tbody>
-          <% for (let id in urls) { %>
+          <% for (let id of userUrls) { %>
             <tr>
               <td><%= id %></td>
               <td><%= urls[id]["longURL"] %></td>
