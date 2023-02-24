@@ -1,16 +1,27 @@
 const express = require("express");
 const app = express();
+const PORT = 8080;
 const cookieSession = require('cookie-session');
-const PORT = 8080; // default port 8080
 const bcrypt = require("bcryptjs");
-const { getUserByEmail } = require("./helpers");
+const { getUserByEmail, generateRandomString, } = require("./helpers");
 
 app.set("view engine", "ejs");
-app.use(express.urlencoded({ extended: true })); //populates req.body
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
   name: 'session',
   keys: ['bingbongbing', 'bongbingbong']
 }));
+
+//returns an array of URL ids associated with a given userID
+const getUrlsForUser = function(id) {
+  const userUrls = [];
+  for (let key in urlDatabase) {
+    if (urlDatabase[key].userID === id) {
+      userUrls.push(key);
+    }
+  }
+  return userUrls;
+};
 
 const urlDatabase = {
   b2xVn2: {
@@ -32,44 +43,15 @@ const users = {
   },
 };
 
-//FUNCTIONs --------------------------------------------------|
-
-//random string for accountId's and shortnening URLs
-function generateRandomString() {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  const charactersLength = characters.length;
-  for (let i = 0; i < 6; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
-}
-//email lookup in users object
-
-//returns an array of URL ids associated with a given userID
-const getUrlsForUser = function(id) {
-  const userUrls = [];
-  for (let key in urlDatabase) {
-    if (urlDatabase[key].userID === id) {
-      userUrls.push(key);
-    }
-  }
-  return userUrls;
-};
-
-//--------------------------------------------------------------|
-//--------------------------------------------------------------|
-
 app.listen(PORT, () => {
   console.log(`Tinyapp app listening on port ${PORT}!`);
 });
 
-//General rediect to either login or urls page
+//General redirect to either login or urls page
 app.get("/", (req, res) => {
   if (!req.session.user_id) {
     return res.redirect('/urls/login');
   }
-
   res.redirect('/urls');
 });
 
@@ -84,15 +66,13 @@ app.get("/urls/register", (req, res) => {
   res.render("urls_register", templateVars);
 });
 
-//account register post
+//account register post request
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-
   if (!email || !password) {
     return res.status(400).send('Please provide an email and password!');
   }
-
   if (getUserByEmail(email, users)) {
     return res.status(400).send('Account already exists!');
   }
@@ -106,24 +86,20 @@ app.post("/register", (req, res) => {
   res.redirect("/urls");
 });
 
-//account login post
+//account login post request
 app.post("/urls/login", (req, res) => {
   const loginEmail = req.body.email;
   const loginPassword = req.body.password;
-
   if (!loginEmail || !loginPassword) {
     return res.status(400).send('Please provide an email and password!');
   }
   const foundUser = getUserByEmail(loginEmail, users);
-
   if (!foundUser) {
     return res.status(403).send('Account not registered');
   }
-
   if (!bcrypt.compareSync(loginPassword, foundUser.password)) {
     return res.status(403).send('Email/Password Incorrect');
   }
-
   req.session.user_id = foundUser.id;
   res.redirect("/urls");
 });
@@ -145,29 +121,21 @@ app.post("/urls", (req, res) => {
   if (!req.session.user_id) {
     return res.status(400).send('Please login to shorten URLs! <a href="/login"></a>');
   }
-  // const shortUrl = generateRandomString();
-  // const newlongURL = req.body.longURL;
-  // urlDatabase[shortUrl] = {};
-  // urlDatabase[shortUrl]["longURL"] = newlongURL;
-  // res.redirect(`/urls/${shortUrl}`);
-
   const id = generateRandomString();
   urlDatabase[id] = {
     longURL: req.body.longURL,
     userID: req.session.user_id
   };
   res.redirect("/urls/" + id);
-
 });
 
 // tinylink to long url
 app.get("/u/:id", (req, res) => {
-  const id = req.params.id
-  if(!urlDatabase[id]) {
-    return res.status(400).send('this URL does not exist')
+  const id = req.params.id;
+  if (!urlDatabase[id]) {
+    return res.status(400).send('this URL does not exist');
   }
   const longURL = urlDatabase[id].longURL;
-
   res.redirect(longURL);
 });
 
@@ -175,10 +143,7 @@ app.get("/u/:id", (req, res) => {
 app.get("/u/:id/edit", (req, res) => {
   res.redirect("/urls/:id");
 });
-/** ---------------------------------------
- * these are post routes: *
- * ----------------------------------------
-*/
+
 //user logout
 app.post("/logout", (req, res) => {
   req.session = null;;
@@ -199,19 +164,15 @@ app.post("/urls/:id", (req, res) => {
 //delete button on homepage, deletes urls
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
-
   if (!urlDatabase[id]) {
     return res.status(400).send('file does not exist');
   }
-
   if (!req.session.user_id) {
     return res.status(400).send('You must login to delete');
   }
-
   if (req.session.user_id !== urlDatabase[id].userID) {
     return res.status(400).send('file does not exist');
   }
-
   delete urlDatabase[id];
   res.redirect("/urls");
 });
@@ -222,9 +183,7 @@ app.get("/urls", (req, res) => {
   if (!user) {
     return res.status(403).send('Please login to view your URLs. <a href="/urls/login"><login</a>');
   }
-
   userUrls = getUrlsForUser(user.id);
-
   const templateVars = {
     urls: urlDatabase,
     user: user,
@@ -236,7 +195,7 @@ app.get("/urls", (req, res) => {
 //new tinylink submission page
 app.get("/urls/new", (req, res) => {
   if (!req.session.user_id) {
-    return res.redirect('urls/login');
+    return res.redirect('/urls/login');
   }
   const user = users[req.session.user_id];
   const templateVars = {
@@ -247,7 +206,6 @@ app.get("/urls/new", (req, res) => {
 
 //loads urls_show/edit page
 app.get("/urls/:urlId", (req, res) => {
-
   const user = users[req.session.user_id];
   let shortUrl = req.params.urlId;
   //1. The user is logged in or not?
@@ -255,13 +213,13 @@ app.get("/urls/:urlId", (req, res) => {
     return res.status(403).send('Please login to access this page');
   }
   //2. Checking whether the Short URL is valid or not?
-    let longUrl;
-  if(urlDatabase[shortUrl]) {
-   longUrl = urlDatabase[shortUrl].longURL;
+  let longUrl;
+  if (urlDatabase[shortUrl]) {
+    longUrl = urlDatabase[shortUrl].longURL;
   } else {
     return res.status(403).send('invalid short url ID');
   }
-  //3. Whether the Short URL is belonging to the user logged in or not?
+  //3. Whether the Short URL belongs to the user logged in or not?
   if (urlDatabase[shortUrl].userID !== user.id) {
     return res.status(403).send('Page not accessible');
   }
