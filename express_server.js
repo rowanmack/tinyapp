@@ -208,22 +208,18 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:urlId", (req, res) => {
   const user = users[req.session.user_id];
   let shortUrl = req.params.urlId;
-  //1. The user is logged in or not?
   if (!user) {
     return res.status(403).send('Please login to access this page');
   }
-  //2. Checking whether the Short URL is valid or not?
   let longUrl;
   if (urlDatabase[shortUrl]) {
     longUrl = urlDatabase[shortUrl].longURL;
   } else {
     return res.status(403).send('invalid short url ID');
   }
-  //3. Whether the Short URL belongs to the user logged in or not?
   if (urlDatabase[shortUrl].userID !== user.id) {
     return res.status(403).send('Page not accessible');
   }
-  //4. HAPPY Path (Everything looks fine)
   const templateVars = {
     longUrl,
     id: shortUrl,
